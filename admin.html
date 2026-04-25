@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — NEC Bus Tracking</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0e14;--bg2:#12151f;--card:#181c28;--card2:#1e2333;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+  --orange:#f97316;--orange2:#ea6c0a;--og:rgba(249,115,22,.15);
+  --green:#22c55e;--amber:#fbbf24;--red:#f87171;--blue:#60a5fa;--purple:#a78bfa;
+  --text:#eef2ff;--text2:#7c8db5;--text3:#3d4a6b;
+  --nav-h:68px;--r:14px;--nav-bg:rgba(12,14,20,.9);
+}
+[data-theme="light"]{
+  --bg:#f0f2f8;--bg2:#e4e8f2;--card:#ffffff;--card2:#f5f7fd;
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);
+  --og:rgba(249,115,22,.12);
+  --text:#1a1d2e;--text2:#4a5678;--text3:#8a96b5;
+  --nav-bg:rgba(240,242,248,.92);
+}
+.theme-btn{
+  width:36px;height:36px;border-radius:50%;
+  border:1px solid var(--border2);background:var(--card2);
+  color:var(--text2);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .25s;flex-shrink:0;
+}
+.theme-btn:hover{border-color:var(--orange);color:var(--orange);transform:rotate(20deg)}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;min-height:100vh}
+nav{
+  position:sticky;top:0;z-index:900;height:var(--nav-h);
+  display:flex;align-items:center;justify-content:space-between;padding:0 32px;
+  background:var(--nav-bg);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand-emblem{width:48px;height:48px;border-radius:50%;overflow:hidden;flex-shrink:0;box-shadow:0 4px 16px rgba(249,115,22,.3);background:#1a1a2e;display:flex;align-items:center;justify-content:center}
+.brand-emblem img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.brand-name{font-size:15px;font-weight:900;color:var(--text)}.brand-sub{font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.12em}
+.nav-links{display:flex;gap:2px;list-style:none}
+.nav-a{text-decoration:none;color:var(--text2);padding:7px 15px;border-radius:8px;font-size:13px;font-weight:700;transition:all .2s}
+.nav-a:hover,.nav-a.on{color:var(--text);background:var(--card2)}
+.nav-a.on{color:var(--orange)}
+.admin-chip{display:flex;align-items:center;gap:6px;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:var(--red);padding:5px 13px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.08em}
+.ham{display:none;flex-direction:column;gap:4px;background:none;border:1px solid var(--border2);padding:7px 9px;border-radius:8px;cursor:pointer}
+.ham span{display:block;width:18px;height:2px;background:var(--text2);border-radius:2px}
+
+.wrap{max-width:1100px;margin:0 auto;padding:36px 24px 80px;display:flex;flex-direction:column;gap:20px}
+
+/* page header */
+.pg-hd{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.pg-hd h1{font-size:26px;font-weight:900}
+.pg-hd p{font-size:13px;color:var(--text2);font-weight:600;margin-top:4px}
+.ast-row{display:flex;gap:12px;flex-wrap:wrap}
+.ast{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:12px 18px;text-align:center;min-width:70px}
+.ast span{display:block;font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;line-height:1;margin-bottom:4px}
+.ast label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.ast.og span{color:var(--orange)}.ast.gn span{color:var(--green)}.ast.am span{color:var(--amber)}.ast.bl span{color:var(--blue)}
+
+/* grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.acard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px}
+.ac-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.ac-hd h3{font-size:15px;font-weight:900}
+
+/* form */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.fg input,.fg select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;outline:none;transition:all .2s}
+.fg input:focus,.fg select:focus{border-color:var(--orange2);box-shadow:0 0 0 3px var(--og)}
+.fg input::placeholder{color:var(--text3)}
+.fg select option{background:var(--bg2)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{width:100%;padding:11px;border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;cursor:pointer;transition:all .2s;margin-top:4px}
+.btn-og{background:var(--orange);color:#000}.btn-og:hover{background:var(--orange2);transform:translateY(-1px)}
+.btn-bl{background:var(--blue);color:#000}.btn-bl:hover{background:#3b82f6;transform:translateY(-1px)}
+.fmsg{font-size:12px;min-height:18px;margin-top:8px;font-weight:700}
+.fmsg.ok{color:var(--green)}.fmsg.err{color:var(--red)}
+
+/* table */
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);font-weight:800}
+tbody td{padding:12px 12px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+tbody tr:hover td{background:var(--bg2)}
+.t-empty{padding:32px;text-align:center;color:var(--text3)}
+.tbadge{display:inline-block;padding:3px 10px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px}
+.sbadge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800}
+.sbadge.run{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.sbadge.stp{background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.25)}
+.via-cell{font-size:11px;color:var(--text2);max-width:160px}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+.del{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:var(--red);padding:4px 12px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:800;transition:all .2s}
+.del:hover{background:rgba(248,113,113,.18)}
+.srch{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;outline:none;width:200px;transition:border-color .2s}
+.srch:focus{border-color:var(--orange2)}
+
+/* toast */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--card);border:1px solid var(--orange);color:var(--orange);padding:10px 24px;border-radius:20px;font-size:13px;font-weight:800;opacity:0;pointer-events:none;transition:all .3s;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:700px){.grid2{grid-template-columns:1fr}.row2{grid-template-columns:1fr}.nav-links{display:none;flex-direction:column;position:absolute;top:var(--nav-h);left:0;right:0;background:rgba(12,14,20,.98);border-bottom:1px solid var(--border);padding:12px;gap:4px}.nav-links.open{display:flex}.ham{display:flex}}
+
+/* GPS Panel */
+.gps-panel{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:16px;margin-bottom:14px}
+.gps-status{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin-bottom:10px}
+.gps-dot{width:10px;height:10px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+.gps-dot.active{background:var(--green);animation:pulse 1.5s ease-in-out infinite}
+.gps-dot.error{background:var(--red)}
+.gps-dot.live{background:var(--orange);animation:pulse 1s ease-in-out infinite}
+.gps-coords{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.gps-coord-row{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center}
+.gps-coord-row span{display:block;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:800;margin-bottom:3px}
+.gps-coord-row strong{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green)}
+.gps-btns{display:flex;gap:8px;flex-wrap:wrap}
+.gps-btn{flex:1;padding:9px 12px;border:1px solid var(--border2);border-radius:9px;background:var(--card);color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;transition:all .2s;min-width:120px}
+.gps-btn:hover{background:var(--card2);border-color:var(--orange)}
+.gps-live-btn.on{background:rgba(249,115,22,.15);border-color:var(--orange);color:var(--orange)}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" class="brand">
+    <div class="brand-emblem"><img src="/static/logo.png" alt="NEC Logo"></div>
+    <div>
+      <div class="brand-name">Nellai Engineering College</div>
+      <div class="brand-sub">Bus Tracking System</div>
+    </div>
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="/" class="nav-a">Home</a></li>
+    <li><a href="/#tracker" class="nav-a">Live Bus Map</a></li>
+    <li><a href="/#bus-list" class="nav-a">Bus List</a></li>
+    <li><a href="/admin" class="nav-a on">Admin Panel</a></li>
+    <li><a href="/#about" class="nav-a">About</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark">☀️</button>
+    <div class="admin-chip">⚙️ ADMIN</div>
+    <button class="ham" onclick="document.getElementById('navLinks').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <!-- Header -->
+  <div class="pg-hd">
+    <div><h1>⚙️ Admin Panel</h1><p>Nellai Engineering College · Nanguneri · Fleet Management</p></div>
+    <div class="ast-row">
+      <div class="ast og"><span id="aTotal">—</span><label>Total</label></div>
+      <div class="ast gn"><span id="aRun">—</span><label>Running</label></div>
+      <div class="ast am"><span id="aStp">—</span><label>Stopped</label></div>
+
+    </div>
+  </div>
+
+  <!-- Forms -->
+  <div class="grid2">
+    <!-- Add Bus -->
+    <div class="acard">
+      <div class="ac-hd"><h3>➕ Add New Bus</h3></div>
+      <div class="row2">
+        <div class="fg"><label>Bus Number *</label><input id="nNum" placeholder="NEC-09"></div>
+        <div class="fg"><label>Route Color</label><input type="color" id="nCol" value="#f97316" style="height:42px;padding:4px 8px"></div>
+      </div>
+      <div class="fg"><label>Route Name *</label><input id="nRoute" placeholder="College to Tirunelveli Town"></div>
+      <div class="fg"><label>Driver Name *</label><input id="nDrv" placeholder="Driver Full Name"></div>
+      <div class="fg"><label>Driver Phone</label><input id="nPh" placeholder="9876543210"></div>
+      <div class="row2">
+        <div class="fg"><label>From Stop</label><input id="nFrom" placeholder="Nellai Engg College"></div>
+        <div class="fg"><label>To Stop</label><input id="nTo" placeholder="Destination"></div>
+      </div>
+      <div class="fg"><label>Via Stops</label><input id="nVia" placeholder="Nanguneri, Valliyoor, Thisayanvilai"></div>
+      <div class="row2">
+        <div class="fg"><label>Latitude</label><input type="number" id="nLat" placeholder="8.4967" step="0.0001"></div>
+        <div class="fg"><label>Longitude</label><input type="number" id="nLng" placeholder="77.6539" step="0.0001"></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Capacity</label><input type="number" id="nCap" placeholder="60" min="1"></div>
+        <div class="fg"><label>Status</label><select id="nSts"><option value="Running">Running</option><option value="Stopped">Stopped</option></select></div>
+      </div>
+      <button class="btn btn-og" onclick="addBus()">Add Bus to Fleet</button>
+      <div class="fmsg" id="addMsg"></div>
+    </div>
+
+    <!-- Update Location -->
+    <div class="acard">
+      <div class="ac-hd"><h3>📍 Update Bus Location</h3></div>
+      <div class="fg"><label>Select Bus *</label><select id="uBus"><option value="">Select a bus…</option></select></div>
+
+      <!-- GPS Panel -->
+      <div class="gps-panel" id="gpsPanel">
+        <div class="gps-status" id="gpsStatus">
+          <span class="gps-dot" id="gpsDot"></span>
+          <span id="gpsLabel">GPS not active</span>
+        </div>
+        <div class="gps-coords" id="gpsCoords" style="display:none">
+          <div class="gps-coord-row"><span>LAT</span><strong id="gpsLatDisp">—</strong></div>
+          <div class="gps-coord-row"><span>LNG</span><strong id="gpsLngDisp">—</strong></div>
+          <div class="gps-coord-row"><span>ACC</span><strong id="gpsAcc">—</strong></div>
+        </div>
+        <div class="gps-btns">
+          <button class="gps-btn" id="gpsStartBtn" onclick="startGPS()">📡 Get GPS Location</button>
+          <button class="gps-btn gps-live-btn" id="gpsLiveBtn" onclick="toggleLiveGPS()" style="display:none">🔴 Live Track: OFF</button>
+        </div>
+        <div class="fmsg" id="gpsMsg"></div>
+      </div>
+
+      <div class="row2">
+        <div class="fg"><label>Latitude *</label><input type="number" id="uLat" placeholder="8.4967" step="0.0001"></div>
+        <div class="fg"><label>Longitude *</label><input type="number" id="uLng" placeholder="77.6539" step="0.0001"></div>
+      </div>
+      <div class="fg"><label>Status</label><select id="uSts"><option value="Running">Running</option><option value="Stopped">Stopped</option></select></div>
+      <div class="row2">
+        <div class="fg"><label>ETA (minutes)</label><input type="number" id="uEta" placeholder="0" min="0"></div>
+        <div class="fg"><label>Speed (km/h)</label><input type="number" id="uSpd" placeholder="0" min="0"></div>
+      </div>
+      <button class="btn btn-bl" onclick="updateLoc()">Update Location</button>
+      <div class="fmsg" id="updMsg"></div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="acard">
+    <div class="ac-hd">
+      <h3>🚌 All Buses — NEC Fleet</h3>
+      <input class="srch" placeholder="Search…" oninput="filterTbl(this.value)">
+    </div>
+    <div class="tscroll">
+      <table>
+        <thead><tr>
+          <th>Bus No.</th><th>Route</th><th>Driver</th><th>Phone</th>
+          <th>From → To</th><th>Via</th><th>Status</th>
+          <th>ETA</th><th>Speed</th><th>Action</th>
+        </tr></thead>
+        <tbody id="tbody"><tr><td colspan="10" class="t-empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ── ADMIN LOGIN GATE ─────────────────────────────────────── -->
+<style>
+#loginGate{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(12,14,20,.97);backdrop-filter:blur(18px);
+  display:flex;align-items:center;justify-content:center;
+}
+.login-box{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:20px;padding:44px 40px;width:100%;max-width:380px;
+  box-shadow:0 24px 80px rgba(0,0,0,.6);text-align:center;
+}
+.login-logo{width:80px;height:80px;border-radius:50%;object-fit:cover;margin:0 auto 18px;display:block;border:2px solid var(--orange)}
+.login-box h2{font-size:20px;font-weight:900;margin-bottom:4px}
+.login-box p{font-size:12px;color:var(--text2);font-weight:600;margin-bottom:28px}
+.login-box input{
+  width:100%;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;color:var(--text);
+  font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;
+  outline:none;text-align:center;letter-spacing:.15em;margin-bottom:14px;
+  transition:border-color .2s;
+}
+.login-box input:focus{border-color:var(--orange2);box-shadow:0 0 0 3px var(--og)}
+.login-box input::placeholder{letter-spacing:normal}
+.login-btn{
+  width:100%;padding:12px;border:none;border-radius:10px;
+  background:var(--orange);color:#000;font-family:'Nunito',sans-serif;
+  font-size:14px;font-weight:900;cursor:pointer;transition:all .2s;
+}
+.login-btn:hover{background:var(--orange2);transform:translateY(-1px)}
+.login-err{font-size:12px;color:var(--red);font-weight:700;min-height:18px;margin-top:8px}
+.login-shake{animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+</style>
+
+<div id="loginGate">
+  <div class="login-box">
+    <img class="login-logo" src="/static/logo.png" alt="NEC Logo">
+    <h2>Admin Panel</h2>
+    <p>Nellai Engineering College · Bus Tracking System</p>
+    <input type="password" id="pwdInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')checkPwd()">
+    <button class="login-btn" onclick="checkPwd()">🔐 Login</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Change this password to whatever you like
+  const ADMIN_PASSWORD = 'yours';
+  // Keep unlocked for the session
+  if(sessionStorage.getItem('nec_admin_ok')==='1'){
+    document.getElementById('loginGate').style.display='none';
+  }
+  window.checkPwd=function(){
+    const v=document.getElementById('pwdInput').value;
+    if(v===ADMIN_PASSWORD){
+      sessionStorage.setItem('nec_admin_ok','1');
+      document.getElementById('loginGate').style.display='none';
+    } else {
+      const box=document.querySelector('.login-box');
+      box.classList.remove('login-shake');
+      void box.offsetWidth;
+      box.classList.add('login-shake');
+      const err=document.getElementById('loginErr');
+      err.textContent='Incorrect password. Try again.';
+      document.getElementById('pwdInput').value='';
+      setTimeout(()=>err.textContent='',3000);
+    }
+  };
+})();
+</script>
+
+<script>
+// ── GPS ──────────────────────────────────────────────────────
+let gpsWatchId = null;
+let liveTracking = false;
+let liveInterval = null;
+
+function setGPSUI(state, label, lat, lng, acc) {
+  const dot = document.getElementById('gpsDot');
+  const lbl = document.getElementById('gpsLabel');
+  const coords = document.getElementById('gpsCoords');
+  dot.className = 'gps-dot ' + (state === 'active' ? 'active' : state === 'live' ? 'live' : state === 'error' ? 'error' : '');
+  lbl.textContent = label;
+  if (lat !== undefined) {
+    coords.style.display = 'grid';
+    document.getElementById('gpsLatDisp').textContent = lat.toFixed(6);
+    document.getElementById('gpsLngDisp').textContent = lng.toFixed(6);
+    document.getElementById('gpsAcc').textContent = acc ? acc.toFixed(0) + 'm' : '—';
+    document.getElementById('uLat').value = lat.toFixed(6);
+    document.getElementById('uLng').value = lng.toFixed(6);
+  }
+}
+
+function startGPS() {
+  if (!navigator.geolocation) {
+    setGPSUI('error', 'GPS not supported on this device');
+    return;
+  }
+  setGPSUI('', 'Acquiring GPS signal…');
+  document.getElementById('gpsStartBtn').textContent = '⏳ Locating…';
+  document.getElementById('gpsStartBtn').disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      const { latitude: lat, longitude: lng, accuracy: acc } = pos.coords;
+      setGPSUI('active', `📍 Location acquired (±${Math.round(acc)}m)`, lat, lng, acc);
+      document.getElementById('gpsStartBtn').textContent = '🔄 Refresh GPS';
+      document.getElementById('gpsStartBtn').disabled = false;
+      document.getElementById('gpsLiveBtn').style.display = '';
+      gpsMsg('ok', '✓ Coordinates filled in fields below');
+    },
+    function(err) {
+      const msgs = { 1: 'Permission denied — allow location in browser', 2: 'Position unavailable', 3: 'GPS timed out — try again' };
+      setGPSUI('error', msgs[err.code] || 'GPS error');
+      document.getElementById('gpsStartBtn').textContent = '📡 Retry GPS';
+      document.getElementById('gpsStartBtn').disabled = false;
+      gpsMsg('err', msgs[err.code] || 'GPS error');
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+function toggleLiveGPS() {
+  const btn = document.getElementById('gpsLiveBtn');
+  if (!liveTracking) {
+    // Start live tracking
+    liveTracking = true;
+    btn.textContent = '🟠 Live Track: ON';
+    btn.classList.add('on');
+    setGPSUI('live', 'Live GPS tracking active…');
+
+    gpsWatchId = navigator.geolocation.watchPosition(
+      function(pos) {
+        const { latitude: lat, longitude: lng, accuracy: acc } = pos.coords;
+        setGPSUI('live', `📡 Live tracking (±${Math.round(acc)}m)`, lat, lng, acc);
+
+        // Auto-update DB if a bus is selected
+        const bid = document.getElementById('uBus').value;
+        if (bid) {
+          fetch('/api/update_location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              bus_id: parseInt(bid),
+              latitude: lat, longitude: lng,
+              status: document.getElementById('uSts').value,
+              eta_minutes: parseInt(document.getElementById('uEta').value) || 0,
+              speed_kmh: parseFloat(document.getElementById('uSpd').value) || (pos.coords.speed ? pos.coords.speed * 3.6 : 0),
+              passengers: 0,
+            })
+          }).then(() => {
+            toast('📡 Live location updated');
+            load();
+          });
+        }
+      },
+      function(err) {
+        setGPSUI('error', 'Live GPS lost — ' + err.message);
+        stopLiveGPS();
+      },
+      { enableHighAccuracy: true, maximumAge: 5000 }
+    );
+  } else {
+    stopLiveGPS();
+  }
+}
+
+function stopLiveGPS() {
+  liveTracking = false;
+  if (gpsWatchId !== null) { navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null; }
+  const btn = document.getElementById('gpsLiveBtn');
+  btn.textContent = '🔴 Live Track: OFF';
+  btn.classList.remove('on');
+  setGPSUI('active', 'Live tracking stopped');
+}
+
+function gpsMsg(t, txt) {
+  const e = document.getElementById('gpsMsg');
+  e.textContent = txt;
+  e.className = 'fmsg ' + t;
+  setTimeout(() => { e.textContent = ''; e.className = 'fmsg'; }, 4000);
+}
+// ── End GPS ──────────────────────────────────────────────────
+
+let all=[];
+
+async function load(){
+  const [br,sr]=await Promise.all([fetch('/api/buses'),fetch('/api/stats')]);
+  all=await br.json();
+  const s=await sr.json();
+  document.getElementById('aTotal').textContent=s.total;
+  document.getElementById('aRun').textContent=s.running;
+  document.getElementById('aStp').textContent=s.stopped;
+  render(all); popSel(all);
+}
+
+function render(list){
+  const tb=document.getElementById('tbody');
+  if(!list.length){tb.innerHTML='<tr><td colspan="10" class="t-empty">No buses found</td></tr>';return}
+  tb.innerHTML=list.map(b=>`<tr>
+    <td><span class="tbadge" style="background:${b.route_color}20;color:${b.route_color};border:1px solid ${b.route_color}40">${b.bus_number}</span></td>
+    <td><strong>${b.route_name}</strong></td>
+    <td>${b.driver_name}</td>
+    <td class="mono">${b.driver_phone||'—'}</td>
+    <td style="font-size:12px;color:var(--text2)">${b.from_stop||'—'} → ${b.to_stop||'—'}</td>
+    <td class="via-cell">${b.via_stops||'—'}</td>
+    <td><span class="sbadge ${b.status==='Running'?'run':'stp'}">${b.status}</span></td>
+    <td class="mono">${b.eta_minutes>0?b.eta_minutes+'m':'—'}</td>
+    <td class="mono">${Math.round(b.speed_kmh||0)} km/h</td>
+    <td><button class="del" onclick="del(${b.id},'${b.bus_number}')">Delete</button></td>
+  </tr>`).join('');
+}
+
+function popSel(list){
+  const s=document.getElementById('uBus');
+  s.innerHTML='<option value="">Select a bus…</option>'+list.map(b=>`<option value="${b.id}">${b.bus_number} — ${b.route_name}</option>`).join('');
+}
+
+function filterTbl(q){
+  render(q?all.filter(b=>[b.bus_number,b.route_name,b.driver_name,b.from_stop,b.to_stop].some(s=>(s||'').toLowerCase().includes(q.toLowerCase()))):all);
+}
+
+function msg(id,txt,t){const e=document.getElementById(id);e.textContent=txt;e.className='fmsg '+t;setTimeout(()=>{e.textContent='';e.className='fmsg'},4000)}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+async function addBus(){
+  const num=document.getElementById('nNum').value.trim();
+  const rt=document.getElementById('nRoute').value.trim();
+  const drv=document.getElementById('nDrv').value.trim();
+  if(!num||!rt||!drv){msg('addMsg','Fill all required (*) fields','err');return}
+  const r=await fetch('/api/add_bus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    bus_number:num,route_name:rt,driver_name:drv,
+    driver_phone:document.getElementById('nPh').value.trim(),
+    from_stop:document.getElementById('nFrom').value.trim()||'Nellai Engg College',
+    to_stop:document.getElementById('nTo').value.trim(),
+    via_stops:document.getElementById('nVia').value.trim(),
+    latitude:parseFloat(document.getElementById('nLat').value)||8.4967,
+    longitude:parseFloat(document.getElementById('nLng').value)||77.6539,
+    capacity:parseInt(document.getElementById('nCap').value)||60,
+    status:document.getElementById('nSts').value,
+    route_color:document.getElementById('nCol').value,
+  })});
+  const d=await r.json();
+  if(d.success){msg('addMsg','✓ Bus added!','ok');toast('Bus added!');['nNum','nRoute','nDrv','nPh','nFrom','nTo','nVia','nLat','nLng','nCap'].forEach(id=>document.getElementById(id).value='');load()}
+  else msg('addMsg',d.error||'Error','err');
+}
+
+async function updateLoc(){
+  const bid=document.getElementById('uBus').value;
+  const lat=parseFloat(document.getElementById('uLat').value);
+  const lng=parseFloat(document.getElementById('uLng').value);
+  if(!bid||isNaN(lat)||isNaN(lng)){msg('updMsg','Select bus + enter lat/lng','err');return}
+  const r=await fetch('/api/update_location',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    bus_id:parseInt(bid),latitude:lat,longitude:lng,
+    status:document.getElementById('uSts').value,
+    eta_minutes:parseInt(document.getElementById('uEta').value)||0,
+    speed_kmh:parseFloat(document.getElementById('uSpd').value)||0,
+    passengers:0,
+  })});
+  const d=await r.json();
+  if(d.success){msg('updMsg','✓ Updated!','ok');toast('Location updated!');load()}
+  else msg('updMsg',d.error||'Error','err');
+}
+
+async function del(id,name){
+  if(!confirm(`Delete ${name}?`))return;
+  const r=await fetch(`/api/delete_bus/${id}`,{method:'DELETE'});
+  const d=await r.json();
+  if(d.success){toast(`${name} deleted`);load()}
+}
+
+function toggleTheme(){
+  const root=document.documentElement;
+  const isDark=root.getAttribute('data-theme')!=='light';
+  root.setAttribute('data-theme',isDark?'light':'dark');
+  document.getElementById('themeBtn').textContent=isDark?'🌙':'☀️';
+  localStorage.setItem('nec_theme',isDark?'light':'dark');
+}
+(function(){
+  const saved=localStorage.getItem('nec_theme');
+  if(saved==='light'){
+    document.documentElement.setAttribute('data-theme','light');
+    const btn=document.getElementById('themeBtn');
+    if(btn)btn.textContent='🌙';
+  }
+})();
+
+load();
+setInterval(load,10000);
+</script>
+</body>
+</html>
