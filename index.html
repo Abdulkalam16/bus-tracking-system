@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nellai Engineering College — Bus Tracking</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#0c0e14;--bg2:#12151f;--card:#181c28;--card2:#1e2333;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+  --orange:#f97316;--orange2:#ea6c0a;--og:rgba(249,115,22,.15);
+  --green:#22c55e;--amber:#fbbf24;--red:#f87171;--blue:#60a5fa;
+  --text:#eef2ff;--text2:#7c8db5;--text3:#3d4a6b;
+  --nav-h:68px;--r:14px;--nav-bg:rgba(12,14,20,.9);
+}
+[data-theme="light"]{
+  --bg:#f0f2f8;--bg2:#e4e8f2;--card:#ffffff;--card2:#f5f7fd;
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);--og:rgba(249,115,22,.12);
+  --text:#1a1d2e;--text2:#4a5678;--text3:#8a96b5;--nav-bg:rgba(240,242,248,.92);
+}
+[data-theme="light"] .hero::before{background-image:linear-gradient(rgba(249,115,22,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(249,115,22,.055) 1px,transparent 1px)}
+[data-theme="light"] .leaflet-tile-pane{filter:brightness(.98) saturate(.85) hue-rotate(5deg) contrast(1.02) !important}
+[data-theme="light"] .leaflet-popup-content-wrapper{background:rgba(255,255,255,.97) !important;color:var(--text) !important}
+[data-theme="light"] .leaflet-popup-tip{background:rgba(255,255,255,.97) !important}
+.theme-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:var(--card2);color:var(--text2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .25s;flex-shrink:0}
+.theme-btn:hover{border-color:var(--orange);color:var(--orange);transform:rotate(20deg)}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;overflow-x:hidden}
+nav{position:sticky;top:0;z-index:900;height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:var(--nav-bg);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand-emblem{width:48px;height:48px;border-radius:50%;overflow:hidden;flex-shrink:0;box-shadow:0 4px 16px rgba(249,115,22,.3);background:#1a1a2e;display:flex;align-items:center;justify-content:center}
+.brand-emblem img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.brand-text{display:flex;flex-direction:column;gap:1px}
+.brand-name{font-size:15px;font-weight:900;color:var(--text);letter-spacing:-.2px;line-height:1}
+.brand-sub{font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.12em}
+.nav-links{display:flex;gap:2px;list-style:none}
+.nav-a{text-decoration:none;color:var(--text2);padding:7px 15px;border-radius:8px;font-size:13px;font-weight:700;transition:all .2s}
+.nav-a:hover,.nav-a.on{color:var(--text);background:var(--card2)}
+.nav-a.on{color:var(--orange)}
+.live-chip{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:var(--green);padding:5px 13px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.08em}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{opacity:.4;box-shadow:0 0 0 5px transparent}}
+.ham{display:none;flex-direction:column;gap:4px;background:none;border:1px solid var(--border2);padding:7px 9px;border-radius:8px;cursor:pointer}
+.ham span{display:block;width:18px;height:2px;background:var(--text2);border-radius:2px}
+
+
+#fb-status{
+  display:none;padding:10px 32px;font-size:12px;font-weight:700;
+  background:rgba(249,115,22,.12);border-bottom:1px solid rgba(249,115,22,.25);
+  color:var(--orange);align-items:center;gap:8px;
+}
+#fb-status.show{display:flex}
+#fb-status.ok{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.2);color:var(--green)}
+#fb-status.err{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.2);color:var(--red)}
+
+.hero{position:relative;overflow:hidden;padding:70px 64px 56px;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center;background:radial-gradient(ellipse 55% 70% at 85% 50%,rgba(249,115,22,.07) 0%,transparent 60%),radial-gradient(ellipse 40% 50% at 0% 80%,rgba(96,165,250,.04) 0%,transparent 50%)}
+.hero::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(249,115,22,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(249,115,22,.035) 1px,transparent 1px);background-size:48px 48px}
+.hero-left{position:relative;z-index:2}
+.hero-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.3);color:var(--orange);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:20px}
+.tag-dot{width:7px;height:7px;border-radius:50%;background:var(--orange);animation:pulse 1.8s infinite}
+.hero h1{font-size:clamp(28px,3.8vw,50px);font-weight:900;line-height:1.1;letter-spacing:-.5px;margin-bottom:10px}
+.hero h1 .accent{background:linear-gradient(120deg,var(--orange),#fb923c,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-college{font-size:14px;color:var(--text2);font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.hero-college span{color:var(--orange)}
+.hero-desc{font-size:15px;color:var(--text2);line-height:1.7;margin-bottom:36px;max-width:480px}
+.stat-bar{display:flex;align-items:stretch;background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;width:fit-content}
+.sbar-item{padding:18px 28px;text-align:center;border-right:1px solid var(--border)}
+.sbar-item:last-child{border-right:none}
+.sbar-num{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;line-height:1;margin-bottom:4px}
+.sbar-num.og{color:var(--orange)}.sbar-num.gn{color:var(--green)}.sbar-num.am{color:var(--amber)}.sbar-num.bl{color:var(--blue)}
+.sbar-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+.hero-graphic{position:relative;width:220px;height:220px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.hg-ring{position:absolute;border-radius:50%}
+.hg-ring.r1{width:120px;height:120px;border:2px dashed rgba(249,115,22,.2);animation:rotateCW 14s linear infinite}
+.hg-ring.r2{width:175px;height:175px;border:1px solid rgba(249,115,22,.1);animation:rotateCCW 20s linear infinite}
+.hg-ring.r3{width:218px;height:218px;border:1px dashed rgba(249,115,22,.06);animation:rotateCW 28s linear infinite}
+@keyframes rotateCW{to{transform:rotate(360deg)}}
+@keyframes rotateCCW{to{transform:rotate(-360deg)}}
+.hg-bus{font-size:56px;z-index:2;animation:float 3s ease-in-out infinite;filter:drop-shadow(0 0 20px rgba(249,115,22,.4))}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.hg-dot{position:absolute;width:10px;height:10px;border-radius:50%;z-index:3}
+.hg-dot.a{background:var(--orange);top:8px;left:50%;animation:orb 8s linear infinite}
+.hg-dot.b{background:var(--green);bottom:10px;right:10px;animation:orb 12s linear infinite reverse}
+.hg-dot.c{background:var(--blue);top:50%;left:8px;animation:orb 10s linear infinite}
+@keyframes orb{to{transform:rotate(360deg) translateX(105px)}}
+.tracker{border-top:1px solid var(--border)}
+.tracker-top{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px}
+.tracker-title{display:flex;align-items:center;gap:10px}
+.tracker-title h2{font-size:17px;font-weight:800}
+.upd-tag{font-size:11px;font-weight:700;color:var(--green);background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);padding:3px 10px;border-radius:20px}
+.search-wrap{position:relative;width:270px}
+.search-wrap input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 36px 9px 13px;color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;outline:none;transition:all .2s}
+.search-wrap input:focus{border-color:var(--orange2);box-shadow:0 0 0 3px var(--og)}
+.search-wrap input::placeholder{color:var(--text3)}
+.search-wrap::after{content:'🔍';position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+.tracker-body{display:grid;grid-template-columns:310px 1fr;height:calc(100vh - var(--nav-h) - 64px);min-height:540px}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sb-hd{padding:12px 14px 10px;border-bottom:1px solid var(--border);font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.12em}
+.bus-list{flex:1;overflow-y:auto;padding:6px}
+.bus-list::-webkit-scrollbar{width:3px}
+.bus-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.bi{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:11px;cursor:pointer;border:1px solid transparent;margin-bottom:3px;transition:all .18s;animation:slideUp .3s ease both}
+.bi:hover{background:var(--card);border-color:var(--border)}
+.bi.sel{background:var(--card2);border-color:rgba(249,115,22,.35);box-shadow:inset 0 0 0 1px rgba(249,115,22,.1)}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.bi-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;border:1px solid var(--border)}
+.bi-info{flex:1;min-width:0}
+.bi-num{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;margin-bottom:2px}
+.bi-route{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.bi-via{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.bi-right{text-align:right;flex-shrink:0}
+.pip{display:inline-block;width:8px;height:8px;border-radius:50%;margin-bottom:3px}
+.pip.run{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+.pip.stp{background:var(--amber)}
+.bi-eta{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.list-empty{padding:28px;text-align:center;color:var(--text3);font-size:13px}
+.map-wrap{position:relative}
+#map{width:100%;height:100%}
+.detail{position:absolute;bottom:16px;left:16px;z-index:10;width:268px;background:rgba(18,21,31,.97);backdrop-filter:blur(20px);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.5);display:none;animation:pop .22s ease}
+.detail.show{display:block}
+@keyframes pop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.det-hd{padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between}
+.det-num{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700}
+.det-route{font-size:11px;color:var(--text2);margin-top:3px;font-weight:600}
+.det-x{background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:2px 5px;border-radius:5px;transition:color .2s}
+.det-x:hover{color:var(--red)}
+.det-body{padding:12px 16px}
+.det-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.det-row:last-child{border-bottom:none}
+.det-lbl{color:var(--text3);font-weight:600}
+.det-val{color:var(--text);font-weight:700;max-width:145px;text-align:right}
+.det-val.gn{color:var(--green)}.det-val.am{color:var(--amber)}
+.map-ctrls{position:absolute;top:12px;right:12px;z-index:10;display:flex;flex-direction:column;gap:6px}
+.mc-btn{width:34px;height:34px;background:rgba(18,21,31,.92);backdrop-filter:blur(8px);border:1px solid var(--border2);border-radius:9px;color:var(--text2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.mc-btn:hover{border-color:var(--orange);color:var(--orange)}
+.cards-sec{padding:48px 64px 56px;border-top:1px solid var(--border)}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.sec-hd h2{font-size:22px;font-weight:900}
+.sec-badge{font-size:12px;font-weight:800;color:var(--orange);background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);padding:4px 13px;border-radius:20px}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.bcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;cursor:pointer;transition:all .22s;position:relative;overflow:hidden;animation:slideUp .4s ease both}
+.bcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,var(--orange))}
+.bcard:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 14px 40px rgba(0,0,0,.3)}
+.bc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.bc-num{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--c,var(--orange))}
+.bc-route{font-size:12px;color:var(--text2);margin-top:3px;font-weight:600}
+.bc-via{font-size:10px;color:var(--text3);margin-top:2px}
+.bc-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;flex-shrink:0}
+.bc-status.run{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.25)}
+.bc-status.stp{background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.25)}
+.bc-stops{display:flex;gap:8px;margin-bottom:14px}
+.bc-stop{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+.bc-stop-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:3px;font-weight:700}
+.bc-stop-val{font-size:11px;font-weight:700}
+.bc-arr{display:flex;align-items:center;color:var(--text3);font-size:14px;align-self:center;padding:0 2px}
+.bc-bot{display:flex;justify-content:space-between;align-items:flex-end}
+.bc-drv{font-size:12px;color:var(--text2);font-weight:600}
+.bc-drv strong{display:block;color:var(--text);font-weight:800;margin-bottom:1px}
+.bc-eta-box{text-align:right}
+.bc-eta-n{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;line-height:1;color:var(--c,var(--orange))}
+.bc-eta-l{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.about{padding:64px;border-top:1px solid var(--border);background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(249,115,22,.04),transparent 60%)}
+.about-inner{display:grid;grid-template-columns:1fr 1fr;gap:60px;max-width:1080px;margin:0 auto;align-items:center}
+.about h2{font-size:26px;font-weight:900;margin-bottom:12px}
+.about p{color:var(--text2);line-height:1.8;margin-bottom:20px;font-weight:500}
+.tech-pills{display:flex;gap:8px;flex-wrap:wrap}
+.tech-pill{background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);color:var(--orange);font-size:12px;font-weight:800;padding:4px 12px;border-radius:20px}
+.feats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.feat{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:all .2s}
+.feat:hover{border-color:rgba(249,115,22,.25);transform:translateY(-2px)}
+.feat-ico{font-size:24px;flex-shrink:0}
+.feat strong{display:block;font-size:13px;margin-bottom:4px;font-weight:800}
+.feat p{font-size:12px;color:var(--text2);font-weight:500}
+footer{padding:24px 64px;border-top:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.footer-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:14px}
+footer p{font-size:12px;color:var(--text3);font-weight:600}
+.leaflet-container{background:var(--bg) !important}
+.leaflet-tile-pane{filter:brightness(.55) saturate(.45) hue-rotate(195deg) contrast(1.1)}
+.leaflet-popup-content-wrapper{background:rgba(18,21,31,.97) !important;color:var(--text) !important;border:1px solid var(--border2) !important;border-radius:12px !important;box-shadow:0 12px 36px rgba(0,0,0,.6) !important;backdrop-filter:blur(16px)}
+.leaflet-popup-tip{background:rgba(18,21,31,.97) !important}
+.leaflet-popup-content{margin:12px 16px !important;font-family:'Nunito',sans-serif !important;font-size:13px !important}
+.pop-title{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--orange);margin-bottom:9px}
+.pop-row{display:flex;gap:6px;font-size:12px;margin-bottom:4px}
+.pop-lbl{color:var(--text3);min-width:64px;flex-shrink:0;font-weight:700}
+.pop-val{color:var(--text);font-weight:700}
+.pop-val.gn{color:var(--green)}.pop-val.am{color:var(--amber)}
+.pop-hr{height:1px;background:var(--border);margin:8px 0}
+@media(max-width:1024px){.hero{padding:48px 32px}.cards-sec{padding:36px 24px}.about{padding:48px 24px}footer{padding:24px}}
+@media(max-width:860px){.hero{grid-template-columns:1fr}.hero-graphic{display:none}.about-inner{grid-template-columns:1fr;gap:32px}.feats{grid-template-columns:1fr 1fr}}
+@media(max-width:720px){.tracker-body{grid-template-columns:1fr;grid-template-rows:260px 1fr;min-height:760px}.sidebar{border-right:none;border-bottom:1px solid var(--border);max-height:260px}.stat-bar{flex-wrap:wrap}}
+@media(max-width:600px){nav{padding:0 16px}.nav-links{display:none;flex-direction:column;position:absolute;top:var(--nav-h);left:0;right:0;background:rgba(12,14,20,.98);border-bottom:1px solid var(--border);padding:12px;gap:4px}.nav-links.open{display:flex}.ham{display:flex}.hero h1{font-size:26px}.search-wrap{width:100%}.tracker-top{padding:12px 16px}.feats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- Firebase Status Banner -->
+<div id="fb-status">
+  <span id="fb-status-text">🔥 Firebase இணைக்கிறோம்...</span>
+</div>
+
+<nav>
+  <a href="#" class="brand">
+    <div class="brand-emblem"><img src="/static/logo.png" alt="NEC Logo"></div>
+    <div class="brand-text">
+      <span class="brand-name">Nellai Engineering College</span>
+      <span class="brand-sub">Bus Tracking System</span>
+    </div>
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#home"     class="nav-a on">Home</a></li>
+    <li><a href="#tracker"  class="nav-a">Live Bus Map</a></li>
+    <li><a href="#bus-list" class="nav-a">Bus List</a></li>
+    <li><a href="/admin"    class="nav-a">Admin Panel</a></li>
+    <li><a href="#about"    class="nav-a">About</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark">🌙</button>
+    <div class="live-chip"><div class="live-dot"></div>LIVE</div>
+    <button class="ham" onclick="document.getElementById('navLinks').classList.toggle('open')">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<section class="hero" id="home">
+  <div class="hero-left">
+    <div class="hero-tag"><span class="tag-dot"></span>GPS Tracking Active — Nanguneri</div>
+    <div class="hero-college">📍 <span>Nellai Engineering College</span> · Nanguneri, Tirunelveli</div>
+    <h1>Track Your Bus<br><span class="accent">Live & On-Time</span></h1>
+    <p class="hero-desc">Real-time location of all NEC college buses. Firebase Realtime Database powered — updates instantly when ESP32 sends GPS data.</p>
+    <div class="stat-bar">
+      <div class="sbar-item"><div class="sbar-num og" id="sTotal">—</div><div class="sbar-lbl">Total Buses</div></div>
+      <div class="sbar-item"><div class="sbar-num gn" id="sRun">—</div><div class="sbar-lbl">Running</div></div>
+      <div class="sbar-item"><div class="sbar-num am" id="sStop">—</div><div class="sbar-lbl">Stopped</div></div>
+      <div class="sbar-item"><div class="sbar-num bl" id="sPax">—</div><div class="sbar-lbl">Passengers</div></div>
+    </div>
+  </div>
+  <div class="hero-graphic">
+    <div class="hg-ring r1"></div><div class="hg-ring r2"></div><div class="hg-ring r3"></div>
+    <div class="hg-bus">🚌</div>
+    <div class="hg-dot a"></div><div class="hg-dot b"></div><div class="hg-dot c"></div>
+  </div>
+</section>
+
+<section class="tracker" id="tracker">
+  <div class="tracker-top">
+    <div class="tracker-title">
+      <h2>🗺 Live Bus Map</h2>
+      <span class="upd-tag" id="updTag">Connecting to Firebase…</span>
+    </div>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Search bus, route, stop…" oninput="doSearch(this.value)">
+    </div>
+  </div>
+  <div class="tracker-body">
+    <aside class="sidebar" id="bus-list">
+      <div class="sb-hd">Fleet — <span id="sbCount">0</span> Buses</div>
+      <div class="bus-list" id="busList"><div class="list-empty">Firebase இணைக்கிறோம்…</div></div>
+    </aside>
+    <div class="map-wrap">
+      <div id="map"></div>
+      <div class="detail" id="detailCard">
+        <div class="det-hd">
+          <div><div class="det-num" id="detNum">—</div><div class="det-route" id="detRoute">—</div></div>
+          <button class="det-x" onclick="closeDetail()">✕</button>
+        </div>
+        <div class="det-body" id="detBody"></div>
+      </div>
+      <div class="map-ctrls">
+        <button class="mc-btn" onclick="resetMap()" title="Reset">⊕</button>
+        <button class="mc-btn" onclick="toggleRoutes()" id="lineBtn" title="Routes">〰</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cards-sec" id="cards">
+  <div class="sec-hd">
+    <h2>All College Buses</h2>
+    <span class="sec-badge" id="cardsBadge">Loading…</span>
+  </div>
+  <div class="cards-grid" id="cardsGrid"></div>
+</section>
+
+<section class="about" id="about">
+  <div class="about-inner">
+    <div>
+      <h2>About This System</h2>
+      <p>NEC Bus Tracking System — Firebase Realtime Database + ESP32 + NEO-6M GPS + SIM800L GPRS. Bus location updates every 10 seconds from hardware device directly to Firebase cloud.</p>
+      <div class="tech-pills">
+        <span class="tech-pill">Python Flask</span>
+        <span class="tech-pill">Firebase RTDB</span>
+        <span class="tech-pill">ESP32</span>
+        <span class="tech-pill">NEO-6M GPS</span>
+        <span class="tech-pill">SIM800L</span>
+        <span class="tech-pill">Leaflet.js</span>
+      </div>
+    </div>
+    <div class="feats">
+      <div class="feat"><div class="feat-ico">🔥</div><div><strong>Firebase Realtime</strong><p>ESP32 → Firebase → Map instant sync</p></div></div>
+      <div class="feat"><div class="feat-ico">📡</div><div><strong>Hardware GPS</strong><p>NEO-6M + SIM800L GPRS</p></div></div>
+      <div class="feat"><div class="feat-ico">🗺️</div><div><strong>Live Map</strong><p>Leaflet.js + OpenStreetMap</p></div></div>
+      <div class="feat"><div class="feat-ico">📱</div><div><strong>Mobile Ready</strong><p>Works on phone & tablet</p></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand"><span>🎓</span> Nellai Engineering College — Bus Tracking</div>
+  <p>Nanguneri, Tirunelveli District · Flask + Firebase + ESP32</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+
+<script type="module">
+import { initializeApp }              from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDwyUyGiu2m1biRhD2TXk0P9Q0anat8REo",
+  authDomain: "nellai-bus.firebaseapp.com",
+  projectId: "nellai-bus",
+  storageBucket: "nellai-bus.firebasestorage.app",
+  messagingSenderId: "537457907920",
+  appId: "1:537457907920:web:6e004e8f579ef3f3fde6d5"
+};
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+const USE_FIREBASE = firebaseConfig.apiKey !== "YOUR_API_KEY";
+
+const banner     = document.getElementById('fb-status');
+const bannerText = document.getElementById('fb-status-text');
+
+if (USE_FIREBASE) {
+  try {
+    const fbApp = initializeApp(firebaseConfig);
+    const db    = getDatabase(fbApp);
+
+    banner.classList.add('show');
+    bannerText.textContent = '🔥 Firebase இணைகிறது...';
+
+    // ── Realtime listener — buses collection ──────────────────
+    onValue(ref(db, 'buses'), (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+
+      // Convert Firebase object → array with id
+      const busArr = Object.entries(data).map(([key, val]) => ({
+        ...val,
+        id: key   // NEC-01, NEC-02 etc.
+      }));
+
+      // Update global buses array
+      window.buses = busArr;
+
+      // Update UI
+      updateAllUI(busArr);
+
+      banner.className = 'fb-status show ok';
+      banner.classList.add('show', 'ok');
+      bannerText.textContent = `🔥 Firebase Live — ${busArr.length} buses connected`;
+
+      const tag = document.getElementById('updTag');
+      tag.textContent = 'Firebase Live ✓';
+      tag.style.background  = 'rgba(249,115,22,.15)';
+      tag.style.borderColor = 'rgba(249,115,22,.3)';
+      tag.style.color       = 'var(--orange)';
+    }, (error) => {
+      console.error('Firebase error:', error);
+      banner.classList.add('show', 'err');
+      bannerText.textContent = '❌ Firebase error — Flask API use பண்றோம்';
+      fallbackToFlask();
+    });
+
+  } catch (e) {
+    console.error('Firebase init error:', e);
+    fallbackToFlask();
+  }
+} else {
+  // config மாத்தலன்னா Flask API use பண்ணும்
+  console.log('Firebase config இல்லை — Flask API mode');
+  fallbackToFlask();
+}
+
+function fallbackToFlask() {
+  fetchFromFlask();
+  setInterval(fetchFromFlask, 10000);
+}
+
+async function fetchFromFlask() {
+  try {
+    const [br, sr] = await Promise.all([fetch('/api/buses'), fetch('/api/stats')]);
+    const buses = await br.json();
+    const stats = await sr.json();
+    window.buses = buses;
+    updateAllUI(buses, stats);
+    document.getElementById('updTag').textContent = 'Flask API ✓';
+  } catch (e) {
+    console.error('Flask fetch error:', e);
+  }
+}
+
+function updateAllUI(buses, stats) {
+  // Stats
+  const running = buses.filter(b => b.status === 'Running').length;
+  const stopped = buses.length - running;
+  const pax     = buses.reduce((s, b) => s + (b.passengers || 0), 0);
+  document.getElementById('sTotal').textContent = buses.length;
+  document.getElementById('sRun').textContent   = stats ? stats.running  : running;
+  document.getElementById('sStop').textContent  = stats ? stats.stopped  : stopped;
+  document.getElementById('sPax').textContent   = stats ? stats.passengers : pax;
+  document.getElementById('sbCount').textContent = buses.length;
+  document.getElementById('cardsBadge').textContent = `${buses.length} Buses Active`;
+
+  renderList(buses);
+  updateMarkers(buses);
+  renderCards(buses);
+}
+</script>
+
+<script>
+
+let map, markers={}, routeLines={}, selId=null, showRoutes=true;
+window.buses = [];
+
+const NEC  = [8.4967, 77.6539];
+const ZOOM = 11;
+
+function initMap(){
+  map = L.map('map', {center:NEC, zoom:ZOOM, zoomControl:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {maxZoom:18, attribution:'© OpenStreetMap'}).addTo(map);
+  L.control.zoom({position:'topright'}).addTo(map);
+  const ico = L.divIcon({html:'<div style="font-size:28px;filter:drop-shadow(0 2px 8px rgba(249,115,22,.5))">🎓</div>',className:'',iconSize:[30,30],iconAnchor:[15,15]});
+  L.marker(NEC, {icon:ico}).addTo(map)
+    .bindPopup('<div style="font-family:Nunito,sans-serif;font-weight:800;font-size:13px;color:#eef2ff">Nellai Engineering College<br><span style="color:#f97316;font-size:11px">Nanguneri, Tirunelveli</span></div>');
+}
+
+function busIco(color, sel){
+  const s   = sel ? 46 : 36;
+  const ring = sel ? `<circle cx="20" cy="20" r="18" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="5 3" opacity=".7"/>` : '';
+  const svg  = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 40 40">
+    ${ring}
+    <circle cx="20" cy="20" r="${sel?15:14}" fill="${color}" opacity="${sel?1:.9}"/>
+    <text x="20" y="27" text-anchor="middle" font-size="15">🚌</text>
+  </svg>`;
+  return L.divIcon({html:svg, className:'', iconSize:[s,s], iconAnchor:[s/2,s/2], popupAnchor:[0,-s/2]});
+}
+
+function popup(b){
+  const sc  = b.status==='Running'?'gn':'am';
+  const eta = b.eta_minutes>0?`${b.eta_minutes} min`:b.status==='Stopped'?'Stopped':'Live';
+  return `<div class="pop-title">${b.bus_number}</div>
+    <div class="pop-row"><span class="pop-lbl">Route</span><span class="pop-val">${b.route_name}</span></div>
+    <div class="pop-row"><span class="pop-lbl">Driver</span><span class="pop-val">${b.driver_name}</span></div>
+    <div class="pop-row"><span class="pop-lbl">Phone</span><span class="pop-val">${b.driver_phone||'—'}</span></div>
+    <div class="pop-hr"></div>
+    <div class="pop-row"><span class="pop-lbl">From</span><span class="pop-val">${b.from_stop||'—'}</span></div>
+    <div class="pop-row"><span class="pop-lbl">To</span><span class="pop-val">${b.to_stop||'—'}</span></div>
+    <div class="pop-row"><span class="pop-lbl">Via</span><span class="pop-val">${b.via_stops||'—'}</span></div>
+    <div class="pop-hr"></div>
+    <div class="pop-row"><span class="pop-lbl">Status</span><span class="pop-val ${sc}">${b.status}</span></div>
+    <div class="pop-row"><span class="pop-lbl">ETA</span><span class="pop-val">${eta}</span></div>
+    <div class="pop-row"><span class="pop-lbl">Speed</span><span class="pop-val">${Math.round(b.speed_kmh||0)} km/h</span></div>`;
+}
+
+function showDetail(b){
+  const c  = b.route_color||'#f97316';
+  const sc = b.status==='Running'?'gn':'am';
+  const eta = b.eta_minutes>0?`${b.eta_minutes} min`:b.status==='Stopped'?'Stopped':'Live';
+  document.getElementById('detNum').textContent   = b.bus_number;
+  document.getElementById('detNum').style.color   = c;
+  document.getElementById('detRoute').textContent = b.route_name;
+  document.getElementById('detBody').innerHTML = `
+    <div class="det-row"><span class="det-lbl">Driver</span><span class="det-val">${b.driver_name}</span></div>
+    <div class="det-row"><span class="det-lbl">Phone</span><span class="det-val">${b.driver_phone||'—'}</span></div>
+    <div class="det-row"><span class="det-lbl">Status</span><span class="det-val ${sc}">${b.status}</span></div>
+    <div class="det-row"><span class="det-lbl">ETA</span><span class="det-val">${eta}</span></div>
+    <div class="det-row"><span class="det-lbl">Speed</span><span class="det-val">${Math.round(b.speed_kmh||0)} km/h</span></div>
+    <div class="det-row"><span class="det-lbl">Passengers</span><span class="det-val">${b.passengers||0} / ${b.capacity||60}</span></div>
+    <div class="det-row"><span class="det-lbl">Via</span><span class="det-val">${b.via_stops||'—'}</span></div>`;
+  document.getElementById('detailCard').classList.add('show');
+}
+
+function closeDetail(){
+  selId = null;
+  document.getElementById('detailCard').classList.remove('show');
+  window.buses.forEach(b=>{if(markers[b.id])markers[b.id].setIcon(busIco(b.route_color||'#f97316',false))});
+  renderList(window.buses);
+}
+
+function updateMarkers(list){
+  const ids = new Set(list.map(b=>b.id));
+  Object.keys(markers).forEach(id=>{if(!ids.has(id)){map.removeLayer(markers[id]);delete markers[id]}});
+  list.forEach(b=>{
+    const sel = selId===b.id;
+    const ico = busIco(b.route_color||'#f97316', sel);
+    const ll  = [b.latitude, b.longitude];
+    if(markers[b.id]){ markers[b.id].setLatLng(ll).setIcon(ico).setPopupContent(popup(b)) }
+    else{
+      const m = L.marker(ll, {icon:ico}).addTo(map).bindPopup(popup(b), {maxWidth:280});
+      m.on('click', ()=>selectBus(b.id));
+      markers[b.id] = m;
+    }
+    if(showRoutes) drawLine(b);
+  });
+}
+
+function drawLine(b){
+  if(routeLines[b.id]) map.removeLayer(routeLines[b.id]);
+  routeLines[b.id] = L.polyline([NEC,[b.latitude,b.longitude]],
+    {color:b.route_color||'#f97316', weight:2, opacity:.22, dashArray:'6 8'}).addTo(map);
+}
+
+function renderList(list){
+  const el = document.getElementById('busList');
+  if(!list.length){el.innerHTML='<div class="list-empty">No buses found</div>';return}
+  el.innerHTML = list.map((b,i)=>{
+    const sc  = b.status==='Running'?'run':'stp';
+    const eta = b.eta_minutes>0?`${b.eta_minutes}m`:b.status==='Stopped'?'Stopped':'Live';
+    return `<div class="bi${selId===b.id?' sel':''}" onclick="selectBus('${b.id}')" style="animation-delay:${i*.04}s">
+      <div class="bi-icon" style="background:${b.route_color}15;border-color:${b.route_color}30">🚌</div>
+      <div class="bi-info">
+        <div class="bi-num" style="color:${b.route_color||'#f97316'}">${b.bus_number}</div>
+        <div class="bi-route">${b.route_name}</div>
+        <div class="bi-via">${b.via_stops||b.to_stop||''}</div>
+      </div>
+      <div class="bi-right"><span class="pip ${sc}"></span><div class="bi-eta">${eta}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderCards(list){
+  const el = document.getElementById('cardsGrid'); if(!el)return;
+  el.innerHTML = list.map((b,i)=>{
+    const sc  = b.status==='Running'?'run':'stp';
+    const eta = b.eta_minutes>0?b.eta_minutes:b.status==='Stopped'?'—':0;
+    const lbl = b.status==='Stopped'?'stopped':'min ETA';
+    return `<div class="bcard" onclick="goToCard('${b.id}')" style="--c:${b.route_color};animation-delay:${i*.07}s">
+      <div class="bc-top">
+        <div>
+          <div class="bc-num">${b.bus_number}</div>
+          <div class="bc-route">${b.route_name}</div>
+          <div class="bc-via">via ${b.via_stops||'Direct'}</div>
+        </div>
+        <div class="bc-status ${sc}">${b.status==='Running'?'🟢 Running':'🟡 Stopped'}</div>
+      </div>
+      <div class="bc-stops">
+        <div class="bc-stop"><div class="bc-stop-lbl">From</div><div class="bc-stop-val">${b.from_stop||'—'}</div></div>
+        <div class="bc-arr">→</div>
+        <div class="bc-stop"><div class="bc-stop-lbl">To</div><div class="bc-stop-val">${b.to_stop||'—'}</div></div>
+      </div>
+      <div class="bc-bot">
+        <div class="bc-drv"><strong>${b.driver_name}</strong>${b.driver_phone||'Driver'}</div>
+        <div class="bc-eta-box"><div class="bc-eta-n">${eta}</div><div class="bc-eta-l">${lbl}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectBus(id){
+  selId = id;
+  const b = window.buses.find(x=>x.id===id); if(!b)return;
+  window.buses.forEach(x=>{if(markers[x.id])markers[x.id].setIcon(busIco(x.route_color||'#f97316',x.id===id))});
+  map.flyTo([b.latitude,b.longitude], 14, {duration:1.2});
+  if(markers[id]) markers[id].openPopup();
+  showDetail(b); renderList(window.buses);
+}
+
+function goToCard(id){
+  selectBus(id);
+  document.getElementById('tracker').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function resetMap(){map.flyTo(NEC,ZOOM,{duration:1});closeDetail()}
+function toggleRoutes(){
+  showRoutes=!showRoutes;
+  Object.values(routeLines).forEach(l=>showRoutes?map.addLayer(l):map.removeLayer(l));
+  document.getElementById('lineBtn').style.opacity=showRoutes?'1':'.4';
+}
+function doSearch(q){
+  renderList(q?window.buses.filter(b=>[b.bus_number,b.route_name,b.driver_name,b.from_stop,b.to_stop,b.via_stops]
+    .some(s=>(s||'').toLowerCase().includes(q.toLowerCase()))):window.buses);
+}
+
+function toggleTheme(){
+  const root=document.documentElement;
+  const isDark=root.getAttribute('data-theme')!=='light';
+  root.setAttribute('data-theme',isDark?'light':'dark');
+  document.getElementById('themeBtn').textContent=isDark?'🌙':'☀️';
+  localStorage.setItem('nec_theme',isDark?'light':'dark');
+}
+(function(){
+  const saved=localStorage.getItem('nec_theme');
+  if(saved==='light'){
+    document.documentElement.setAttribute('data-theme','light');
+    document.addEventListener('DOMContentLoaded',()=>{
+      const btn=document.getElementById('themeBtn');
+      if(btn)btn.textContent='🌙';
+    });
+  }
+})();
+
+document.addEventListener('DOMContentLoaded', initMap);
+</script>
+</body>
+</html>
