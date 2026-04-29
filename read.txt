@@ -1,0 +1,7 @@
+
+## How it works
+ESP8266 ,(GPS + SIM800L)(OPtional)
+  → GPRS → Firebase Realtime DB
+             ↓ (realtime push)
+           Browser (index.html)
+             → Map marker moves instantly!
