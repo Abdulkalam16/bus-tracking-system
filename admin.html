@@ -7,34 +7,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0c0e14;--bg2:#12151f;--card:#181c28;--card2:#1e2333;
-  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
-  --orange:#f97316;--orange2:#ea6c0a;--og:rgba(249,115,22,.15);
-  --green:#22c55e;--amber:#fbbf24;--red:#f87171;--blue:#60a5fa;--purple:#a78bfa;
-  --text:#eef2ff;--text2:#7c8db5;--text3:#3d4a6b;
-  --nav-h:68px;--r:14px;--nav-bg:rgba(12,14,20,.9);
+bg:#0c0e14;--bg2:#12151f;--card:#181c28;--card2:#1e2333;
+border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+orange:#f97316;--orange2:#ea6c0a;--og:rgba(249,115,22,.15);
+green:#22c55e;--amber:#fbbf24;--red:#f87171;--blue:#60a5fa;--purple:#a78bfa;
+text:#eef2ff;--text2:#7c8db5;--text3:#3d4a6b;
+nav-h:68px;--r:14px;--nav-bg:rgba(12,14,20,.9);
 }
 [data-theme="light"]{
-  --bg:#f0f2f8;--bg2:#e4e8f2;--card:#ffffff;--card2:#f5f7fd;
-  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);
-  --og:rgba(249,115,22,.12);
-  --text:#1a1d2e;--text2:#4a5678;--text3:#8a96b5;
-  --nav-bg:rgba(240,242,248,.92);
+bg:#f0f2f8;--bg2:#e4e8f2;--card:#ffffff;--card2:#f5f7fd;
+border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.15);
+og:rgba(249,115,22,.12);
+text:#1a1d2e;--text2:#4a5678;--text3:#8a96b5;
+nav-bg:rgba(240,242,248,.92);
 }
 .theme-btn{
-  width:36px;height:36px;border-radius:50%;
-  border:1px solid var(--border2);background:var(--card2);
-  color:var(--text2);cursor:pointer;font-size:16px;
-  display:flex;align-items:center;justify-content:center;
-  transition:all .25s;flex-shrink:0;
+ width:36px;height:36px;border-radius:50%;
+ border:1px solid var(--border2);background:var(--card2);
+ color:var(--text2);cursor:pointer;font-size:16px;
+ display:flex;align-items:center;justify-content:center;
+ transition:all .25s;flex-shrink:0;
 }
 .theme-btn:hover{border-color:var(--orange);color:var(--orange);transform:rotate(20deg)}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;min-height:100vh}
 nav{
-  position:sticky;top:0;z-index:900;height:var(--nav-h);
-  display:flex;align-items:center;justify-content:space-between;padding:0 32px;
-  background:var(--nav-bg);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);
+ position:sticky;top:0;z-index:900;height:var(--nav-h);
+ display:flex;align-items:center;justify-content:space-between;padding:0 32px;
+ background:var(--nav-bg);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);
 }
 .brand{display:flex;align-items:center;gap:12px;text-decoration:none}
 .brand-emblem{width:48px;height:48px;border-radius:50%;overflow:hidden;flex-shrink:0;box-shadow:0 4px 16px rgba(249,115,22,.3);background:#1a1a2e;display:flex;align-items:center;justify-content:center}
@@ -123,18 +123,18 @@ tbody tr:hover td{background:var(--bg2)}
 </head>
 <body>
 <nav>
-  <a href="/" class="brand">
-    <div class="brand-emblem"><img src="/static/logo.png" alt="NEC Logo"></div>
-    <div>
-      <div class="brand-name">Nellai Engineering College</div>
-      <div class="brand-sub">Bus Tracking System</div>
-    </div>
-  </a>
-  <ul class="nav-links" id="navLinks">
-    <li><a href="/" class="nav-a">Home</a></li>
-    <li><a href="/#tracker" class="nav-a">Live Bus Map</a></li>
-    <li><a href="/#bus-list" class="nav-a">Bus List</a></li>
-    <li><a href="/admin" class="nav-a on">Admin Panel</a></li>
+     <a href="/" class="brand">
+        <div class="brand-emblem"><img src="/static/logo.png" alt="NEC Logo"></div>
+        <div>
+             <div class="brand-name">Nellai Engineering College</div>
+             <div class="brand-sub">Bus Tracking System</div>
+            </div>
+        </a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/" class="nav-a">Home</a></li>
+             <li><a href="/#tracker" class="nav-a">Live Bus Map</a></li>
+             <li><a href="/#bus-list" class="nav-a">Bus List</a></li>
+             <li><a href="/admin" class="nav-a on">Admin Panel</a></li>
     <li><a href="/#about" class="nav-a">About</a></li>
   </ul>
   <div style="display:flex;align-items:center;gap:10px">
